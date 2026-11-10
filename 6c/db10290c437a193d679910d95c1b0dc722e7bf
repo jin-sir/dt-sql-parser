@@ -1,0 +1,24 @@
+test/parser/spark/suggestion/icebergSuggestion.test.ts
+  s_91205dcac000c3::t_48c994407e8400 27-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "6cdb10290c437a193d679910d95c1b0dc722e7bf",
+  "prompts": {},
+  "humans": {
+    "h_6590780f6d8f27": {
+      "author": "jin-sir <942725119@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_91205dcac000c3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3985736c-0d17-465f-887d-bf7286ff9fa8",
+        "model": "unknown"
+      },
+      "human_author": "jin-sir <942725119@qq.com>"
+    }
+  }
+}
