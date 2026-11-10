@@ -42,6 +42,8 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
         SparkSqlParser.RULE_namespaceName,
         SparkSqlParser.RULE_namespaceNameCreate,
         SparkSqlParser.RULE_tableName,
+        SparkSqlParser.RULE_icebergTableName,
+        SparkSqlParser.RULE_identifierReference,
         SparkSqlParser.RULE_tableNameCreate,
         SparkSqlParser.RULE_viewName,
         SparkSqlParser.RULE_viewNameCreate,
@@ -51,6 +53,7 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
         SparkSqlParser.RULE_columnNamePath,
         SparkSqlParser.RULE_columnNamePathAllowEmpty,
         SparkSqlParser.RULE_columnNameCreate,
+        SparkSqlParser.RULE_nestedColumnNameCreate,
         ...this.excludeKeywordRules,
     ]);
 
@@ -82,6 +85,7 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
     ): Suggestions<Token> {
         const originalSyntaxSuggestions: SyntaxSuggestion<Token>[] = [];
         const keywords: string[] = [];
+        let shouldSuggestIdentifier = false;
 
         for (const candidate of candidates.rules) {
             const [ruleType, candidateRule] = candidate;
@@ -102,12 +106,25 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
                     syntaxContextType = EntityContextType.DATABASE_CREATE;
                     break;
                 }
-                case SparkSqlParser.RULE_tableName: {
+                case SparkSqlParser.RULE_tableName:
+                case SparkSqlParser.RULE_icebergTableName: {
                     syntaxContextType = EntityContextType.TABLE;
                     break;
                 }
                 case SparkSqlParser.RULE_tableNameCreate: {
                     syntaxContextType = EntityContextType.TABLE_CREATE;
+                    break;
+                }
+                case SparkSqlParser.RULE_identifierReference: {
+                    if (candidateRule.startTokenIndex >= caretTokenIndex) {
+                        shouldSuggestIdentifier = true;
+                    }
+                    if (
+                        candidateRule.ruleList.includes(SparkSqlParser.RULE_relationPrimary) ||
+                        candidateRule.ruleList.includes(SparkSqlParser.RULE_dmlStatementNoWith)
+                    ) {
+                        syntaxContextType = EntityContextType.TABLE;
+                    }
                     break;
                 }
                 case SparkSqlParser.RULE_viewName: {
@@ -130,7 +147,8 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
                     syntaxContextType = EntityContextType.COLUMN;
                     break;
                 }
-                case SparkSqlParser.RULE_columnNameCreate: {
+                case SparkSqlParser.RULE_columnNameCreate:
+                case SparkSqlParser.RULE_nestedColumnNameCreate: {
                     syntaxContextType = EntityContextType.COLUMN_CREATE;
                     break;
                 }
@@ -174,6 +192,9 @@ export class SparkSQL extends BasicSQL<SparkSqlLexer, ProgramContext, SparkSqlPa
 
         const processedKeywords = processTokenCandidates(this._parser, candidates.tokens);
         keywords.push(...processedKeywords);
+        if (shouldSuggestIdentifier && !keywords.includes('IDENTIFIER')) {
+            keywords.push('IDENTIFIER');
+        }
 
         return {
             syntax: originalSyntaxSuggestions,

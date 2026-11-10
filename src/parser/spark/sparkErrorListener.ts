@@ -8,6 +8,7 @@ export class SparkErrorListener extends ParseErrorListener {
         [SparkSqlParser.RULE_namespaceName, 'namespace'],
         [SparkSqlParser.RULE_namespaceNameCreate, 'namespace'],
         [SparkSqlParser.RULE_tableName, 'table'],
+        [SparkSqlParser.RULE_icebergTableName, 'table'],
         [SparkSqlParser.RULE_tableNameCreate, 'table'],
         [SparkSqlParser.RULE_viewName, 'view'],
         [SparkSqlParser.RULE_viewNameCreate, 'view'],
@@ -16,6 +17,7 @@ export class SparkErrorListener extends ParseErrorListener {
         [SparkSqlParser.RULE_columnName, 'column'],
         [SparkSqlParser.RULE_columnNamePath, 'column'],
         [SparkSqlParser.RULE_columnNameCreate, 'column'],
+        [SparkSqlParser.RULE_nestedColumnNameCreate, 'column'],
     ]);
 
     public getExpectedText(parser: Parser, token: Token) {
@@ -55,6 +57,7 @@ export class SparkErrorListener extends ParseErrorListener {
                 switch (ruleType) {
                     case SparkSqlParser.RULE_namespaceName:
                     case SparkSqlParser.RULE_tableName:
+                    case SparkSqlParser.RULE_icebergTableName:
                     case SparkSqlParser.RULE_viewName:
                     case SparkSqlParser.RULE_functionName:
                     case SparkSqlParser.RULE_columnName:
@@ -68,7 +71,8 @@ export class SparkErrorListener extends ParseErrorListener {
                     case SparkSqlParser.RULE_tableNameCreate:
                     case SparkSqlParser.RULE_functionNameCreate:
                     case SparkSqlParser.RULE_viewNameCreate:
-                    case SparkSqlParser.RULE_columnNameCreate: {
+                    case SparkSqlParser.RULE_columnNameCreate:
+                    case SparkSqlParser.RULE_nestedColumnNameCreate: {
                         if (!result.includes(`{new}${name}`)) {
                             result.push(`{new}${name}`);
                         }

@@ -10,13 +10,16 @@ import {
     CreateViewContext,
     FunctionNameCreateContext,
     FunctionTableSourceContext,
+    IcebergTableNameContext,
     IdentifierCommentContext,
     InlineTableSourceContext,
     InsertFromQueryContext,
+    MergeIntoTableContext,
     MultipleInsertContext,
     NamedExpressionContext,
     NamespaceNameContext,
     NamespaceNameCreateContext,
+    NestedColumnNameCreateContext,
     QueryStatementContext,
     RelationContext,
     RelationPrimaryContext,
@@ -64,6 +67,45 @@ export class SparkEntityCollector extends EntityCollector implements SparkSqlPar
     exitTableName(ctx: TableNameContext) {
         this.pushEntity(
             ctx,
+            EntityContextType.TABLE,
+            [
+                {
+                    attrName: AttrName.alias,
+                    endContextList: [
+                        RelationPrimaryContext.name,
+                        RelationContext.name,
+                        TableSourceContext.name,
+                    ],
+                },
+            ],
+            {
+                declareType: TableDeclareType.LITERAL,
+            }
+        );
+    }
+
+    /** Iceberg extension table entity rules */
+    exitIcebergTableName(ctx: IcebergTableNameContext) {
+        this.pushEntity(ctx, EntityContextType.TABLE, undefined, {
+            declareType: TableDeclareType.LITERAL,
+        });
+    }
+
+    exitMergeIntoTable(ctx: MergeIntoTableContext) {
+        const source = ctx.identifierReference();
+        if (!source?.multipartIdentifier()) return;
+
+        this.pushEntity(source, EntityContextType.TABLE, undefined, {
+            declareType: TableDeclareType.LITERAL,
+        });
+    }
+
+    exitTableSource(ctx: TableSourceContext) {
+        const identifierReference = ctx.identifierReference();
+        if (!identifierReference?.multipartIdentifier()) return;
+
+        this.pushEntity(
+            identifierReference,
             EntityContextType.TABLE,
             [
                 {
@@ -177,6 +219,10 @@ export class SparkEntityCollector extends EntityCollector implements SparkSqlPar
                 endContextList: [CreateOrReplaceTableColTypeContext.name],
             },
         ]);
+    }
+
+    exitNestedColumnNameCreate(ctx: NestedColumnNameCreateContext) {
+        this.pushEntity(ctx, EntityContextType.COLUMN_CREATE);
     }
 
     exitSelectLiteralColumnName(ctx: SelectLiteralColumnNameContext) {
